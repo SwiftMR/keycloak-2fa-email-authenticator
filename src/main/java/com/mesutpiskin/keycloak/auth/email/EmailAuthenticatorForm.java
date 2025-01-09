@@ -1,6 +1,6 @@
 package com.mesutpiskin.keycloak.auth.email;
 
-import lombok.extern.jbosslog.JBossLog;
+import org.jboss.logging.Logger;
 
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
@@ -26,8 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@JBossLog
 public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator {
+    private static final Logger log = Logger.getLogger(EmailAuthenticatorForm.class);
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
@@ -104,7 +104,8 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator {
             if (Long.parseLong(ttl) < System.currentTimeMillis()) {
                 // expired
                 context.getEvent().user(userModel).error(Errors.EXPIRED_CODE);
-                Response challengeResponse = challenge(context, Messages.EXPIRED_ACTION_TOKEN_SESSION_EXISTS, EmailConstants.CODE);
+                Response challengeResponse = challenge(context, Messages.EXPIRED_ACTION_TOKEN_SESSION_EXISTS,
+                        EmailConstants.CODE);
                 context.failureChallenge(AuthenticationFlowError.EXPIRED_CODE, challengeResponse);
             } else {
                 // valid
@@ -155,7 +156,8 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator {
 
     private void sendEmailWithCode(KeycloakSession session, RealmModel realm, UserModel user, String code, int ttl) {
         if (user.getEmail() == null) {
-            log.warnf("Could not send access code email due to missing email. realm=%s user=%s", realm.getId(), user.getUsername());
+            log.warnf("Could not send access code email due to missing email. realm=%s user=%s", realm.getId(),
+                    user.getUsername());
             throw new AuthenticationFlowException(AuthenticationFlowError.INVALID_USER);
         }
 
@@ -170,7 +172,8 @@ public class EmailAuthenticatorForm extends AbstractUsernameFormAuthenticator {
             EmailTemplateProvider emailProvider = session.getProvider(EmailTemplateProvider.class);
             emailProvider.setRealm(realm);
             emailProvider.setUser(user);
-            // Don't forget to add the welcome-email.ftl (html and text) template to your theme.
+            // Don't forget to add the welcome-email.ftl (html and text) template to your
+            // theme.
             emailProvider.send("emailCodeSubject", subjectParams, "code-email.ftl", mailBodyAttributes);
         } catch (EmailException eex) {
             log.errorf(eex, "Failed to send access code email. realm=%s user=%s", realm.getId(), user.getUsername());
